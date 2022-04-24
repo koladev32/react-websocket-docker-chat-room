@@ -1,0 +1,1 @@
+const WebSocket = require('ws');
