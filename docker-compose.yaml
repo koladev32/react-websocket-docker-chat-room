@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  ws:
+    container_name: ws_server
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    volumes:
+      - ./server:/app/server
+    ports:
+      - "8080:8080"
+    command: >
+      sh -c "node ."
+
+  react-app:
+    container_name: react_app
+    restart: on-failure
+    build: .
+    volumes:
+      - ./src:/app/src
+    ports:
+      - "3000:3000"
+    command: >
+      sh -c "yarn start"
+    depends_on:
+      - ws
