@@ -17,6 +17,7 @@ server.on('connection', (ws) => {
     users.add(userRef);
 
     ws.on('message', (message) => {
+        console.log(message);
         try {
 
             // Parsing the message
