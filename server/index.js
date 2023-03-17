@@ -1,61 +1,40 @@
-const WebSocket = require('ws');
+import {WebSocketServer} from 'ws'
 
-const server = new WebSocket.Server({
-        port: 8080
-    },
-    () => {
-        console.log('Server started on port 8080');
-    }
-);
+const server = new WebSocketServer({port: 8080}, () => console.log('Server started'))
 
 const users = new Set();
 
-server.on('connection', (ws) => {
-    const userRef = {
-        ws,
-    };
-    users.add(userRef);
+function sendMessage(message) {
+    users.forEach((user) => {
+        user.ws.send(JSON.stringify(message))
+    })
+}
 
+server.on('connection', (ws) => {
+    const userRef = {ws}
+    users.add(userRef)
     ws.on('message', (message) => {
         console.log(message);
         try {
-
-            // Parsing the message
             const data = JSON.parse(message);
-
-            // Checking if the message is a valid one
-
-            if (
-                typeof data.sender !== 'string' ||
-                typeof data.body !== 'string'
-            ) {
+            if(typeof data.sender !== 'string' || typeof data.body !== 'string'){
                 console.error('Invalid message');
-                return;
+                return
             }
-
-            // Sending the message
 
             const messageToSend = {
                 sender: data.sender,
                 body: data.body,
-                sentAt: Date.now()
+                sendAt: Date.now()
             }
 
-            sendMessage(messageToSend);
-
-        } catch (e) {
-            console.error('Error passing message!', e)
+            sendMessage(messageToSend)
+        } catch(e) {
+            console.error('Error parsing message', e)
         }
     });
-
     ws.on('close', (code, reason) => {
         users.delete(userRef);
         console.log(`Connection closed: ${code} ${reason}!`);
-    });
+    })
 });
-
-const sendMessage = (message) => {
-    users.forEach((user) => {
-        user.ws.send(JSON.stringify(message));
-    });
-}
