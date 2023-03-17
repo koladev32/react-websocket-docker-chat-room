@@ -1,77 +1,56 @@
-import React, { useRef } from "react";
-import Layout from "../components/Layout";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useRef, useState } from 'react'
+import Layout from '../components/Layout'
+import { useParams } from 'react-router-dom'
+import sendIcon from '../components/sendIcon'
 
-const sendIcon = (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 20 20"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M19 10L1 1L5 10L1 19L19 10Z"
-      stroke="black"
-      strokeWidth="2"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+const ChatPage = () => {
 
-function ChatPage() {
-  const [messages, setMessages] = React.useState([]);
-  const [isConnectionOpen, setConnectionOpen] = React.useState(false);
-  const [messageBody, setMessageBody] = React.useState("");
+    const [messages, setMessages] = useState([]);
+    const [isConnectionOpen, setConnectionOpen] = useState(false)
+    const [messageBody, setMessageBody] = useState("");
 
-  const { username } = useParams();
+    const { username } = useParams();
+    const ws = useRef();
 
-  const ws = useRef();
-
-  // sending message function
-
-  const sendMessage = () => {
-    if (messageBody) {
-      ws.current.send(
-        JSON.stringify({
-          sender: username,
-          body: messageBody,
-        })
-      );
-      setMessageBody("");
-    }
-  };
-
-  React.useEffect(() => {
-    ws.current = new WebSocket("ws://localhost:8080");
-
-    ws.current.onopen = () => {
-      console.log("Connection opened");
-      setConnectionOpen(true);
+    const sendMessage = () => {
+        if(messageBody) {
+            ws.current.send(
+                JSON.stringify({
+                    sender: username,
+                    body: messageBody,
+                })
+            );
+            setMessageBody("");
+        }
     };
 
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setMessages((_messages) => [..._messages, data]);
-    };
+    useEffect(() => {
+        ws.current = new WebSocket("ws://localhost:8080");
+        ws.current.onopen = () => {
+            console.log("Connection Opened");
+            setConnectionOpen(true);
+        }
+        ws.current.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            setMessages((_messages) => [..._messages, data]);
+        };
+        return () => {
+            console.log("Cleaning up...");
+            ws.current.close();
+        }
+    }, []);
 
-    return () => {
-      console.log("Cleaning up...");
-      ws.current.close();
-    };
-  }, []);
+    const scrollTarget = useRef(null);
 
-  const scrollTarget = useRef(null);
-
-  React.useEffect(() => {
-    if (scrollTarget.current) {
-      scrollTarget.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages.length]);
+    useEffect(() => {
+        if(scrollTarget.current) {
+            scrollTarget.current.scrollIntoView({behavior: "smooth"});
+        }
+    }, [messages.length]);
 
   return (
     <Layout>
-      <div id="chat-view-container" className="flex flex-col w-1/3">
+        <div id="chat-view-container" className="flex flex-col w-1/3">
         {messages.map((message, index) => (
           <div key={index} className={`my-3 rounded py-3 w-1/3 text-white ${
             message.sender === username ? "self-end bg-purple-600" : "bg-blue-600"
@@ -125,7 +104,7 @@ function ChatPage() {
         </div>
       </footer>
     </Layout>
-  );
+  )
 }
 
-export default ChatPage;
+export default ChatPage
